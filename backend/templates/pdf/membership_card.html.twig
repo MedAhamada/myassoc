@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page { margin: 0; }
+        body {
+            margin: 0;
+            font-family: 'DejaVu Sans', sans-serif;
+            width: 243pt;
+            height: 153pt;
+        }
+        .card {
+            box-sizing: border-box;
+            width: 243pt;
+            height: 153pt;
+            padding: 10pt;
+            background: linear-gradient(135deg, #0E2A47 0%, #0E2A47 65%, #1F7A3F 100%);
+            color: #FFFFFF;
+        }
+        .header {
+            display: block;
+            border-bottom: 1.5pt solid #F2B705;
+            padding-bottom: 5pt;
+            margin-bottom: 6pt;
+        }
+        .header .assoc {
+            font-size: 8pt;
+            font-weight: bold;
+            letter-spacing: 0.5pt;
+            text-transform: uppercase;
+            color: #F2B705;
+        }
+        .header .title {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-top: 1pt;
+        }
+        .body { width: 100%; }
+        .identity { width: 150pt; display: inline-block; vertical-align: top; }
+        .name { font-size: 13pt; font-weight: bold; }
+        .meta { font-size: 7.5pt; margin-top: 6pt; color: #E5E9F0; line-height: 1.5; }
+        .meta strong { color: #FFFFFF; }
+        .qr { display: inline-block; vertical-align: top; text-align: center; }
+        .qr img { width: 62pt; height: 62pt; background: #FFFFFF; padding: 3pt; border-radius: 3pt; }
+        .footer { font-size: 6pt; margin-top: 6pt; color: #C9D3E0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <div class="assoc">MyAssoc</div>
+            <div class="title">Carte d'adhérent</div>
+        </div>
+        <div class="body">
+            <div class="identity">
+                <div class="name">{{ adherant.prenom }} {{ adherant.nom|upper }}</div>
+                <div class="meta">
+                    N&deg; adh&eacute;rent : <strong>{{ adherant.id|slice(0, 8)|upper }}</strong><br>
+                    {% if adhesion %}
+                        Valide du <strong>{{ adhesion.dateDebut|date('d/m/Y') }}</strong><br>
+                        au <strong>{{ adhesion.dateFin|date('d/m/Y') }}</strong>
+                    {% else %}
+                        Aucune adh&eacute;sion active
+                    {% endif %}
+                </div>
+            </div>
+            <div class="qr">
+                <img src="{{ qrCodeDataUri }}" alt="QR Code">
+            </div>
+        </div>
+        <div class="footer">Scannez le QR code pour v&eacute;rifier la validit&eacute; de cette carte.</div>
+    </div>
+</body>
+</html>

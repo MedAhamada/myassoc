@@ -25,12 +25,18 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      mailer:
+        condition: service_started
     volumes:
       - ./backend:/var/www/backend
     env_file:
       - ./backend/.env
     environment:
       DATABASE_URL: "mysql://${MYSQL_USER:-myassoc}:${MYSQL_PASSWORD:-!ChangeMe!}@mysql:3306/${MYSQL_DATABASE:-myassoc}?serverVersion=8.0.37&charset=utf8mb4"
+      # Routes every outgoing e-mail (membership cards, ...) to the mailhog
+      # service instead of null://null, so they're actually viewable at
+      # http://localhost:8025 in dev.
+      MAILER_DSN: "smtp://mailer:1025"
 
   nginx:
     image: nginx:alpine

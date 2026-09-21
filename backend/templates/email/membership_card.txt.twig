@@ -1,0 +1,13 @@
+Bonjour {{ adherant.prenom }},
+
+Votre adhésion a été confirmée. Vous trouverez votre carte d'adhérent au format PDF en pièce jointe de cet e-mail.
+
+{{ adherant.prenom }} {{ adherant.nom|upper }}
+N° d'adhésion : {{ numeroAdhesion ?? '—' }}
+{% if adhesion %}Valide du {{ adhesion.dateDebut|date('d/m/Y') }} au {{ adhesion.dateFin|date('d/m/Y') }}{% endif %}
+
+Un contrôleur peut vérifier sa validité à tout moment via ce lien :
+{{ verificationUrl }}
+
+Cordialement,
+L'équipe MyAssoc

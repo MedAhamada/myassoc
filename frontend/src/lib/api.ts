@@ -4,6 +4,7 @@ import type {
   Admin,
   ImportResult,
   Paginated,
+  RenewResult,
   VerifyResult,
 } from "./types";
 
@@ -101,7 +102,7 @@ export const api = {
   ) => request<Adherant>(`/members/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   renewMembership: (id: string, data: { dateDebut?: string; dateFin?: string } = {}) =>
-    request<Adherant>(`/members/${id}/renew`, { method: "POST", body: JSON.stringify(data) }),
+    request<RenewResult>(`/members/${id}/renew`, { method: "POST", body: JSON.stringify(data) }),
 
   cancelMembership: (id: string, motif?: string) =>
     request<Adherant>(`/members/${id}/cancel`, {

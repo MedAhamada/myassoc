@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Adherant;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
-use Symfony\Component\Mime\Email;
 
 final class MembershipMailer
 {
@@ -25,17 +25,27 @@ final class MembershipMailer
             throw new \DomainException('Cet adhérent n\'a pas d\'adresse e-mail renseignée.');
         }
 
+        $adhesion = $adherant->getCurrentAdhesion();
         $pdf = $this->cardService->generatePdf($adherant);
 
-        $email = (new Email())
+        $email = (new TemplatedEmail())
             ->from(new Address($this->fromAddress, $this->fromName))
             ->to($adherant->getEmail())
             ->subject('Votre carte d\'adhérent MyAssoc')
-            ->text(sprintf(
-                "Bonjour %s,\n\nVeuillez trouver ci-joint votre carte d'adhérent.\n\nCordialement,\nL'équipe MyAssoc",
-                $adherant->getPrenom()
-            ))
+            ->htmlTemplate('email/membership_card.html.twig')
+            ->textTemplate('email/membership_card.txt.twig')
+            ->context([
+                'adherant' => $adherant,
+                'adhesion' => $adhesion,
+                'numeroAdhesion' => $adhesion ? $this->cardService->formatAdhesionNumber($adhesion) : null,
+                'verificationUrl' => $this->cardService->getVerificationUrl($adherant),
+            ])
             ->attach($pdf, 'carte-adherent.pdf', 'application/pdf');
+
+        $logo = $this->cardService->getLogoPath();
+        if (null !== $logo) {
+            $email->embedFromPath($logo, 'logo');
+        }
 
         $this->mailer->send($email);
     }

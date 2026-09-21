@@ -192,6 +192,46 @@ final class MemberApiTest extends ApiTestCase
         self::assertSame('2026-06-30', substr($adhesion['dateFin'], 0, 10));
     }
 
+    /**
+     * Per spec: the card is sent automatically after renewal whenever the
+     * adherant has an e-mail on file, in addition to the manual
+     * POST /members/{id}/card/send-email endpoint.
+     */
+    public function testRenewSendsCardByEmailWhenAdherantHasAnAddress(): void
+    {
+        $actor = $this->createAdmin();
+        $member = $this->createAdherant('Auto', 'Mailed', 'auto-mailed@test.local');
+
+        $this->client->request(
+            'POST',
+            '/api/members/'.$member->getId().'/renew',
+            server: array_merge(['CONTENT_TYPE' => 'application/json'], $this->authHeaders($actor)),
+            content: '{}',
+        );
+
+        self::assertResponseIsSuccessful();
+        self::assertTrue($this->jsonResponse()['cardEmailSent']);
+        self::assertEmailCount(1);
+        self::assertEmailAddressContains(self::getMailerMessage(), 'To', 'auto-mailed@test.local');
+    }
+
+    public function testRenewDoesNotSendEmailWhenAdherantHasNoAddress(): void
+    {
+        $actor = $this->createAdmin();
+        $member = $this->createAdherant('No', 'Email', null);
+
+        $this->client->request(
+            'POST',
+            '/api/members/'.$member->getId().'/renew',
+            server: array_merge(['CONTENT_TYPE' => 'application/json'], $this->authHeaders($actor)),
+            content: '{}',
+        );
+
+        self::assertResponseIsSuccessful();
+        self::assertFalse($this->jsonResponse()['cardEmailSent']);
+        self::assertEmailCount(0);
+    }
+
     public function testCancelShortensDateFinAndMarksResilie(): void
     {
         $actor = $this->createAdmin();

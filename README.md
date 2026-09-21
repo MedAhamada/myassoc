@@ -11,7 +11,7 @@ Application de gestion dématérialisée des adhérents du **Collectif des Jeune
 | Base de données | MySQL 8                                                           |
 | PDF / QR    | Dompdf + Endroid QR Code                                             |
 | Import      | PhpSpreadsheet (.csv / .xlsx)                                        |
-| Dev env     | Docker Compose (mysql, backend PHP-FPM, nginx, frontend)             |
+| Dev env     | Docker Compose (mysql, backend PHP-FPM, nginx, frontend, adminer, mailhog) |
 
 ## Structure du repository
 
@@ -28,7 +28,7 @@ Application de gestion dématérialisée des adhérents du **Collectif des Jeune
 
 ```bash
 cp .env.example .env          # identifiants MySQL pour docker-compose
-docker compose up -d mysql backend nginx frontend
+docker compose up -d
 
 # première installation uniquement :
 docker compose exec backend composer install
@@ -43,6 +43,8 @@ docker compose exec backend php bin/console app:admin:create admin@myassoc.local
 - Backend (API) : http://localhost:8000/api
 - Frontend : http://localhost:3000
 - Page publique de vérification : http://localhost:3000/verify/{uuid}
+- Adminer (client MySQL web) : http://localhost:8080
+- Mailhog (e-mails envoyés en dev) : http://localhost:8025
 
 ## Backend
 
@@ -78,7 +80,7 @@ php bin/console app:memberships:sync-status
 | POST    | `/api/members`                        | Créer un adhérent                             |
 | GET     | `/api/members/{id}`                   | Fiche détaillée + historique des adhésions    |
 | PATCH   | `/api/members/{id}`                   | Modifier une fiche (mise à jour partielle : seuls les champs présents dans le JSON sont modifiés) |
-| POST    | `/api/members/{id}/renew`             | Renouveler l'adhésion (`dateDebut`/`dateFin` optionnels, défaut = aujourd'hui → +1 an) |
+| POST    | `/api/members/{id}/renew`             | Renouveler l'adhésion (`dateDebut`/`dateFin` optionnels, défaut = aujourd'hui → +1 an). Envoie aussi la carte par e-mail si l'adhérent a une adresse (réponse : `cardEmailSent`) |
 | POST    | `/api/members/{id}/cancel`            | Résilier l'adhésion en cours                  |
 | POST    | `/api/members/import`                 | Import `.csv`/`.xlsx` (champ `file`)          |
 | GET     | `/api/members/{id}/card/download`     | Carte d'adhérent PDF                          |
@@ -106,6 +108,17 @@ La palette (bleu marine `#0E2A47`, or `#F2B705`, vert `#1F7A3F`) s'inspire du lo
 ## Import Excel/CSV
 
 `App\Service\AdherantImportService` associe les colonnes du fichier par en-tête normalisé (accents/casse/ponctuation ignorés), compatible avec le format `docs/adherents.csv` (Nom, Prénom, E-mail, Téléphone, Adresse, Date de naissance, Profession / Études). Les lignes sans nom/prénom, les e-mails invalides et les doublons (par e-mail, dans le fichier ou déjà en base) sont ignorés et rapportés dans la réponse (`imported`, `skippedDuplicates`, `errors[]`) plutôt que de bloquer tout l'import.
+
+## Distribution de la carte
+
+Deux voies, comme prévu par la spec :
+
+- **Manuelle** : `GET /api/members/{id}/card/download` (téléchargement direct) ou `POST /api/members/{id}/card/send-email` (bouton "Envoyer par e-mail" sur la fiche adhérent).
+- **Automatique** : `POST /api/members/{id}/renew` envoie la carte par e-mail dès que l'adhérent a une adresse renseignée (`App\Controller\Api\MemberController::sendCardByEmailIfPossible`). L'envoi est best-effort : une panne SMTP est journalisée mais ne fait pas échouer le renouvellement ; l'admin peut toujours renvoyer la carte manuellement ensuite.
+
+En local (Docker), les e-mails partent vers **Mailhog** (`MAILER_DSN=smtp://mailer:1025` dans `docker-compose.yml`) au lieu d'un vrai serveur SMTP — consultez les messages envoyés sur http://localhost:8025.
+
+L'e-mail est un `TemplatedEmail` (`App\Service\MembershipMailer`) au format HTML + texte brut (`backend/templates/email/membership_card.{html,txt}.twig`), avec le logo intégré en pièce jointe CID (pas en `data:` URI, souvent filtrée par Gmail/Outlook) et la carte PDF en pièce jointe classique — structure MIME `multipart/mixed(multipart/related(multipart/alternative(text, html), logo), pdf)`.
 
 ## Tests automatisés
 

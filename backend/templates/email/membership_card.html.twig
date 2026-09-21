@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votre carte d'adh&eacute;rent MyAssoc</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F2F4F7; font-family:Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F4F7; padding:24px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%; background-color:#FFFFFF; border-radius:10px; overflow:hidden; box-shadow:0 1px 3px rgba(16,24,40,0.1);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color:#0E2A47; padding:24px 28px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="padding-right:12px;">
+                                        <img src="cid:logo" width="44" height="44" alt="Logo" style="display:block; border-radius:50%; border:2px solid #F2B705;">
+                                    </td>
+                                    <td>
+                                        <div style="color:#FFFFFF; font-size:18px; font-weight:bold; line-height:1.2;">MyAssoc</div>
+                                        <div style="color:#F2B705; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px;">Carte d'adh&eacute;rent officielle</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:28px;">
+                            <p style="margin:0 0 16px 0; font-size:15px; color:#101828; line-height:1.5;">
+                                Bonjour <strong>{{ adherant.prenom }}</strong>,
+                            </p>
+                            <p style="margin:0 0 20px 0; font-size:15px; color:#344054; line-height:1.5;">
+                                Votre adh&eacute;sion a &eacute;t&eacute; confirm&eacute;e. Vous trouverez votre carte
+                                d'adh&eacute;rent au format PDF en pi&egrave;ce jointe de cet e-mail.
+                            </p>
+
+                            <!-- Info card -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0E2A47; border-radius:10px;">
+                                <tr>
+                                    <td style="padding:20px 22px;">
+                                        <div style="color:#FFFFFF; font-size:17px; font-weight:bold;">{{ adherant.prenom }} {{ adherant.nom|upper }}</div>
+
+                                        <div style="color:#F2B705; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-top:14px;">N&deg; d'adh&eacute;sion</div>
+                                        <div style="color:#FFFFFF; font-size:14px; font-weight:bold; letter-spacing:0.4px; margin-top:2px;">{{ numeroAdhesion ?? '—' }}</div>
+
+                                        {% if adhesion %}
+                                        <div style="color:#E5E9F0; font-size:13px; margin-top:14px;">
+                                            Valide du <strong style="color:#FFFFFF;">{{ adhesion.dateDebut|date('d/m/Y') }}</strong>
+                                            au <strong style="color:#FFFFFF;">{{ adhesion.dateFin|date('d/m/Y') }}</strong>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin:20px 0 0 0; font-size:13px; color:#667085; line-height:1.5;">
+                                &#128206; La carte est jointe &agrave; cet e-mail au format PDF &mdash; pensez &agrave; la
+                                t&eacute;l&eacute;charger ou &agrave; l'imprimer.
+                            </p>
+
+                            <p style="margin:20px 0 0 0; font-size:13px; color:#667085; line-height:1.5;">
+                                Un contr&ocirc;leur peut v&eacute;rifier sa validit&eacute; &agrave; tout moment en scannant
+                                le QR code, ou via ce lien :<br>
+                                <a href="{{ verificationUrl }}" style="color:#0E2A47;">{{ verificationUrl }}</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:16px 28px; border-top:1px solid #EAECF0;">
+                            <p style="margin:0; font-size:12px; color:#98A2B3;">
+                                Cordialement,<br>L'&eacute;quipe MyAssoc
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

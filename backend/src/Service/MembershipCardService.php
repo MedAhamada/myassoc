@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Adherant;
+use App\Entity\Adhesion;
 use Dompdf\Dompdf;
 use Dompdf\Options as DompdfOptions;
 use Endroid\QrCode\Builder\Builder;
@@ -21,6 +22,7 @@ final class MembershipCardService
     public function __construct(
         private readonly Environment $twig,
         private readonly string $frontendUrl,
+        private readonly string $logoPath,
     ) {
     }
 
@@ -43,6 +45,34 @@ final class MembershipCardService
         return $result->getDataUri();
     }
 
+    public function getLogoDataUri(): string
+    {
+        $contents = @file_get_contents($this->logoPath);
+        if (false === $contents) {
+            return '';
+        }
+
+        return 'data:image/jpeg;base64,'.base64_encode($contents);
+    }
+
+    /** Filesystem path to the logo, for callers that need to embed it (e.g. as a CID email attachment) rather than a data URI. */
+    public function getLogoPath(): ?string
+    {
+        return is_readable($this->logoPath) ? $this->logoPath : null;
+    }
+
+    /**
+     * A short, readable membership number derived from the adhesion's own
+     * (already unique) id — grouped like "3F2A-9B71-0CDE" rather than
+     * printing the full UUID.
+     */
+    public function formatAdhesionNumber(Adhesion $adhesion): string
+    {
+        $hex = strtoupper(str_replace('-', '', (string) $adhesion->getId()));
+
+        return implode('-', str_split(substr($hex, 0, 12), 4));
+    }
+
     public function generatePdf(Adherant $adherant): string
     {
         $adhesion = $adherant->getCurrentAdhesion();
@@ -51,6 +81,8 @@ final class MembershipCardService
             'adherant' => $adherant,
             'adhesion' => $adhesion,
             'qrCodeDataUri' => $this->generateQrCodeDataUri($adherant),
+            'logoDataUri' => $this->getLogoDataUri(),
+            'numeroAdhesion' => $adhesion ? $this->formatAdhesionNumber($adhesion) : null,
         ]);
 
         $options = new DompdfOptions();
@@ -58,8 +90,11 @@ final class MembershipCardService
         $options->setDefaultFont('DejaVu Sans');
 
         $dompdf = new Dompdf($options);
-        // Physical card size (85.6mm x 53.98mm) converted to points, landscape.
-        $dompdf->setPaper([0, 0, 243, 153], 'landscape');
+        // Physical card size (85.6mm x 53.98mm) converted to points. The array is
+        // already landscape-shaped (width > height) — passing orientation
+        // "landscape" here would make Dompdf swap width/height AGAIN, turning
+        // it back into a portrait page.
+        $dompdf->setPaper([0, 0, 243, 153]);
         $dompdf->loadHtml($html);
         $dompdf->render();
 

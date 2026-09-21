@@ -64,7 +64,11 @@ export default function MemberDetailPage() {
         dateFin: dateFin || undefined,
       });
       setMember(updated);
-      setNotice("Adhésion renouvelée.");
+      setNotice(
+        updated.cardEmailSent
+          ? "Adhésion renouvelée. Carte envoyée par e-mail à l'adhérent."
+          : "Adhésion renouvelée.",
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Échec du renouvellement.");
     } finally {

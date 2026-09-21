@@ -13,7 +13,9 @@ use App\Enum\AdherantStatut;
 use App\Repository\AdherantRepository;
 use App\Service\AdherantImportService;
 use App\Service\AdhesionService;
+use App\Service\MembershipMailer;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +25,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -37,6 +40,9 @@ final class MemberController extends AbstractController
         private readonly SerializerInterface $serializer,
         private readonly AdhesionService $adhesionService,
         private readonly ValidatorInterface $validator,
+        private readonly MembershipMailer $membershipMailer,
+        private readonly LoggerInterface $logger,
+        private readonly NormalizerInterface $normalizer,
     ) {
     }
 
@@ -187,9 +193,12 @@ final class MemberController extends AbstractController
             throw new UnprocessableEntityHttpException($e->getMessage());
         }
 
-        $json = $this->serializer->serialize($adherant, 'json', ['groups' => ['adherant:read', 'adherant:read:detail']]);
+        $cardEmailSent = $this->sendCardByEmailIfPossible($adherant);
 
-        return new JsonResponse($json, 200, [], true);
+        $data = $this->normalizer->normalize($adherant, context: ['groups' => ['adherant:read', 'adherant:read:detail']]);
+        $data['cardEmailSent'] = $cardEmailSent;
+
+        return new JsonResponse($data, 200);
     }
 
     #[Route('/{id}/cancel', methods: ['POST'])]
@@ -206,6 +215,33 @@ final class MemberController extends AbstractController
         $json = $this->serializer->serialize($adherant, 'json', ['groups' => ['adherant:read', 'adherant:read:detail']]);
 
         return new JsonResponse($json, 200, [], true);
+    }
+
+    /**
+     * Automatic distribution after renewal, per spec: send the card by e-mail
+     * whenever the adherant has an address on file. Best-effort — a mail
+     * failure (bad SMTP config, provider outage) must not turn an otherwise
+     * successful renewal into a 500; the admin can still retry manually via
+     * POST /members/{id}/card/send-email.
+     */
+    private function sendCardByEmailIfPossible(Adherant $adherant): bool
+    {
+        if (null === $adherant->getEmail()) {
+            return false;
+        }
+
+        try {
+            $this->membershipMailer->sendCard($adherant);
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error('Échec de l\'envoi automatique de la carte par e-mail.', [
+                'adherant' => (string) $adherant->getId(),
+                'exception' => $e,
+            ]);
+
+            return false;
+        }
     }
 
     private function findOrFail(string $id): Adherant

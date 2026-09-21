@@ -36,6 +36,15 @@ export interface Adherant {
   adhesions?: Adhesion[];
 }
 
+/**
+ * POST /members/{id}/renew sends the card automatically when the adherant
+ * has an e-mail on file (best-effort — `cardEmailSent` reflects whether that
+ * actually happened, not just whether an address was present).
+ */
+export interface RenewResult extends Adherant {
+  cardEmailSent: boolean;
+}
+
 export interface Paginated<T> {
   items: T[];
   total: number;

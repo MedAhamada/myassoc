@@ -10,6 +10,11 @@ parameters:
     app.frontend_url: '%env(FRONTEND_URL)%'
     app.mailer_from_address: '%env(MAILER_FROM_ADDRESS)%'
     app.mailer_from_name: '%env(MAILER_FROM_NAME)%'
+    # Small, square, pre-cropped copy of docs/cjomm-logo.jpeg — the original is
+    # 1254x1254 and ~500KB, which bloats every generated PDF/e-mail attachment
+    # for a logo displayed at 26pt. Regenerate with:
+    #   php -r '$s=imagecreatefromjpeg("public/images/logo.jpeg");$w=imagesx($s);$h=imagesy($s);$c=min($w,$h);$x=(int)(($w-$c)/2);$y=(int)(($h-$c)/2);$d=imagecreatetruecolor(240,240);imagecopyresampled($d,$s,0,0,$x,$y,240,240,$c,$c);imagejpeg($d,"public/images/logo-card.jpeg",82);'
+    app.logo_path: '%kernel.project_dir%/public/images/logo-card.jpeg'
 
 services:
     # default configuration for services in *this* file
@@ -20,6 +25,7 @@ services:
             string $frontendUrl: '%app.frontend_url%'
             string $fromAddress: '%app.mailer_from_address%'
             string $fromName: '%app.mailer_from_name%'
+            string $logoPath: '%app.logo_path%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

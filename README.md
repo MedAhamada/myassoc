@@ -77,6 +77,7 @@ php bin/console app:memberships:sync-status
 | GET     | `/api/members`                        | Liste/recherche/filtre des adhérents (`q`, `statut`, `page`, `limit`) |
 | POST    | `/api/members`                        | Créer un adhérent                             |
 | GET     | `/api/members/{id}`                   | Fiche détaillée + historique des adhésions    |
+| PATCH   | `/api/members/{id}`                   | Modifier une fiche (mise à jour partielle : seuls les champs présents dans le JSON sont modifiés) |
 | POST    | `/api/members/{id}/renew`             | Renouveler l'adhésion (`dateDebut`/`dateFin` optionnels, défaut = aujourd'hui → +1 an) |
 | POST    | `/api/members/{id}/cancel`            | Résilier l'adhésion en cours                  |
 | POST    | `/api/members/import`                 | Import `.csv`/`.xlsx` (champ `file`)          |
@@ -91,7 +92,7 @@ Toutes les erreurs `/api/*` renvoient un JSON `{ error, status, violations? }` (
 Next.js App Router, JWT stocké côté client (`localStorage`) et transmis en `Authorization: Bearer`. Pages principales :
 
 - `/login` — authentification
-- `/members`, `/members/new`, `/members/[id]`, `/members/import` — gestion des adhérents
+- `/members`, `/members/new`, `/members/[id]` (fiche + édition inline, historique, actions), `/members/import` — gestion des adhérents
 - `/admins` — CRUD administrateurs
 - `/verify/[uuid]` — page publique (rendue côté serveur, aucune authentification)
 
@@ -106,9 +107,36 @@ La palette (bleu marine `#0E2A47`, or `#F2B705`, vert `#1F7A3F`) s'inspire du lo
 
 `App\Service\AdherantImportService` associe les colonnes du fichier par en-tête normalisé (accents/casse/ponctuation ignorés), compatible avec le format `docs/adherents.csv` (Nom, Prénom, E-mail, Téléphone, Adresse, Date de naissance, Profession / Études). Les lignes sans nom/prénom, les e-mails invalides et les doublons (par e-mail, dans le fichier ou déjà en base) sont ignorés et rapportés dans la réponse (`imported`, `skippedDuplicates`, `errors[]`) plutôt que de bloquer tout l'import.
 
+## Tests automatisés
+
+### Backend (PHPUnit)
+
+Tests fonctionnels (`backend/tests/Api/`) qui font de vraies requêtes HTTP via `KernelBrowser` contre une base MySQL de test dédiée (`<nom_de_la_base>_test`, isolée automatiquement par `dama/doctrine-test-bundle` : chaque test tourne dans une transaction annulée à la fin, donc aucun nettoyage manuel n'est nécessaire).
+
+```bash
+# une fois, pour créer la base de test :
+docker compose exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" \
+  -e "CREATE DATABASE IF NOT EXISTS myassoc_test CHARACTER SET utf8mb4; GRANT ALL PRIVILEGES ON myassoc_test.* TO '$MYSQL_USER'@'%';"
+docker compose exec -e APP_ENV=test backend php bin/console doctrine:migrations:migrate --no-interaction
+
+# lancer la suite :
+docker compose exec backend php bin/phpunit
+```
+
+Couverture : authentification/JWT, CRUD admins (y compris garde-fous — email dupliqué, auto-suppression), CRUD + recherche/filtre adhérents, `PATCH` partiel (champ omis vs `null` explicite), règles de renouvellement/résiliation, génération de carte PDF, envoi d'e-mail (assertions sur le mailer de test), page publique de vérification (VALIDE/EXPIREE/INVALIDE, aucune donnée privée exposée), et import du fichier `docs/adherents.csv` réel (mirroré dans `tests/Fixtures/`) avec sa duplication volontaire.
+
+### Frontend (Vitest + Testing Library)
+
+```bash
+cd frontend
+npm test          # une passe
+npm run test:watch
+```
+
+Couverture : le client API (`src/lib/api.ts` — en-têtes, gestion des erreurs `ApiError`/violations, réponses 204/`FormData`), les utilitaires de formatage de date, et le composant `StatusBadge`.
+
 ## Prochaines étapes suggérées
 
-- Endpoint `PATCH /api/members/{id}` pour éditer une fiche existante.
-- Tests automatisés (PHPUnit côté backend, Playwright/Vitest côté frontend).
 - Passage du JWT en cookie httpOnly + Server Actions Next.js pour éviter le `localStorage`.
-- CI (lint, tests, `doctrine:schema:validate`) avant déploiement.
+- CI (lint + les deux suites de tests + `doctrine:schema:validate`) avant déploiement.
+- Tests end-to-end (Playwright) pour les parcours critiques (connexion → création → renouvellement → téléchargement de carte).

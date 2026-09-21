@@ -93,6 +93,13 @@ export const api = {
   createMember: (data: Partial<Adherant> & { nom: string; prenom: string }) =>
     request<Adherant>("/members", { method: "POST", body: JSON.stringify(data) }),
 
+  updateMember: (
+    id: string,
+    data: Partial<
+      Pick<Adherant, "nom" | "prenom" | "email" | "telephone" | "adresse" | "dateNaissance" | "profession" | "commentaires">
+    >,
+  ) => request<Adherant>(`/members/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+
   renewMembership: (id: string, data: { dateDebut?: string; dateFin?: string } = {}) =>
     request<Adherant>(`/members/${id}/renew`, { method: "POST", body: JSON.stringify(data) }),
 

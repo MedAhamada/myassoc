@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { VerifyResult } from "@/lib/types";
+import { formatDate } from "@/lib/format";
 
 // Server-side fetch (this page runs on the server): inside Docker Compose,
 // `localhost` refers to the frontend container itself, not the nginx service,
@@ -46,9 +47,7 @@ export default async function VerifyPage(props: PageProps<"/verify/[uuid]">) {
             <p className="font-medium">
               {result.prenom} {result.nom}
             </p>
-            {result.dateFin && (
-              <p>Valable jusqu&apos;au {new Date(result.dateFin).toLocaleDateString("fr-FR")}</p>
-            )}
+            {result.dateFin && <p>Valable jusqu&apos;au {formatDate(result.dateFin)}</p>}
           </div>
         )}
       </div>

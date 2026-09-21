@@ -5,11 +5,19 @@ import { useParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import type { Adherant } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
+import { formatDate, toDateInputValue } from "@/lib/format";
 
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("fr-FR");
-}
+type EditableFields = "nom" | "prenom" | "email" | "telephone" | "adresse" | "dateNaissance" | "profession";
+
+const EDIT_FIELDS: { name: EditableFields; label: string; type?: string; required?: boolean }[] = [
+  { name: "nom", label: "Nom", required: true },
+  { name: "prenom", label: "Prénom", required: true },
+  { name: "email", label: "Email", type: "email" },
+  { name: "telephone", label: "Téléphone", type: "tel" },
+  { name: "dateNaissance", label: "Date de naissance", type: "date" },
+  { name: "profession", label: "Profession / Études" },
+  { name: "adresse", label: "Adresse" },
+];
 
 export default function MemberDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +27,16 @@ export default function MemberDetailPage() {
   const [busy, setBusy] = useState(false);
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<Record<EditableFields, string>>({
+    nom: "",
+    prenom: "",
+    email: "",
+    telephone: "",
+    adresse: "",
+    dateNaissance: "",
+    profession: "",
+  });
 
   const load = useCallback(async () => {
     setError(null);
@@ -83,6 +101,44 @@ export default function MemberDetailPage() {
     }
   }
 
+  function handleEditStart() {
+    if (!member) return;
+    setEditForm({
+      nom: member.nom,
+      prenom: member.prenom,
+      email: member.email ?? "",
+      telephone: member.telephone ?? "",
+      adresse: member.adresse ?? "",
+      dateNaissance: toDateInputValue(member.dateNaissance),
+      profession: member.profession ?? "",
+    });
+    setIsEditing(true);
+  }
+
+  async function handleEditSave() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const updated = await api.updateMember(id, {
+        nom: editForm.nom,
+        prenom: editForm.prenom,
+        email: editForm.email || null,
+        telephone: editForm.telephone || null,
+        adresse: editForm.adresse || null,
+        dateNaissance: editForm.dateNaissance || null,
+        profession: editForm.profession || null,
+      });
+      setMember(updated);
+      setIsEditing(false);
+      setNotice("Fiche mise à jour.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Échec de la mise à jour.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSendEmail() {
     setBusy(true);
     setError(null);
@@ -125,14 +181,61 @@ export default function MemberDetailPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <section className="space-y-3 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold text-brand-navy">Coordonnées</h2>
-          <dl className="space-y-1 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Email</dt><dd>{member.email ?? "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Téléphone</dt><dd>{member.telephone ?? "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Adresse</dt><dd className="text-right">{member.adresse ?? "—"}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Date de naissance</dt><dd>{formatDate(member.dateNaissance)}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Profession</dt><dd>{member.profession ?? "—"}</dd></div>
-          </dl>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-brand-navy">Coordonnées</h2>
+            {!isEditing && (
+              <button
+                onClick={handleEditStart}
+                className="text-sm font-medium text-brand-navy hover:underline"
+              >
+                Modifier
+              </button>
+            )}
+          </div>
+
+          {isEditing ? (
+            <div className="space-y-3">
+              {EDIT_FIELDS.map((field) => (
+                <div key={field.name}>
+                  <label className="mb-1 block text-xs text-gray-500">
+                    {field.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </label>
+                  <input
+                    type={field.type ?? "text"}
+                    required={field.required}
+                    value={editForm[field.name]}
+                    onChange={(e) => setEditForm((f) => ({ ...f, [field.name]: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+                  />
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleEditSave}
+                  disabled={busy || !editForm.nom.trim() || !editForm.prenom.trim()}
+                  className="rounded-lg bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:bg-brand-navy-dark disabled:opacity-60"
+                >
+                  Enregistrer
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  disabled={busy}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between"><dt className="text-gray-500">Email</dt><dd>{member.email ?? "—"}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Téléphone</dt><dd>{member.telephone ?? "—"}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Adresse</dt><dd className="text-right">{member.adresse ?? "—"}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Date de naissance</dt><dd>{formatDate(member.dateNaissance)}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Profession</dt><dd>{member.profession ?? "—"}</dd></div>
+            </dl>
+          )}
         </section>
 
         <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

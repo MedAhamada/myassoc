@@ -154,6 +154,7 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
+    #[\Deprecated]
     public function eraseCredentials(): void
     {
     }

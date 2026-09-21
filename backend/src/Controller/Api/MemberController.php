@@ -25,6 +25,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/members')]
 final class MemberController extends AbstractController
@@ -34,6 +36,7 @@ final class MemberController extends AbstractController
         private readonly AdherantRepository $adherantRepository,
         private readonly SerializerInterface $serializer,
         private readonly AdhesionService $adhesionService,
+        private readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -117,6 +120,57 @@ final class MemberController extends AbstractController
         return new JsonResponse($json, 200, [], true);
     }
 
+    /**
+     * Partial update: unlike POST /members, only the fields present in the
+     * JSON body are touched (so a field simply omitted from the payload keeps
+     * its current value, while `"email": null` explicitly clears it). That
+     * distinction is why this reads the raw decoded body via array_key_exists
+     * instead of #[MapRequestPayload] — a DTO can't tell "omitted" from
+     * "sent as null" once both land on the same nullable property.
+     */
+    #[Route('/{id}', methods: ['PATCH'])]
+    public function update(string $id, Request $request): JsonResponse
+    {
+        $adherant = $this->findOrFail($id);
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            throw new BadRequestHttpException('Corps de requête JSON invalide.');
+        }
+
+        if (array_key_exists('nom', $data)) {
+            $adherant->setNom($this->requireNonBlankString($data['nom'], 'nom'));
+        }
+        if (array_key_exists('prenom', $data)) {
+            $adherant->setPrenom($this->requireNonBlankString($data['prenom'], 'prenom'));
+        }
+        if (array_key_exists('email', $data)) {
+            $adherant->setEmail($this->validateOptionalEmail($data['email']));
+        }
+        if (array_key_exists('telephone', $data)) {
+            $adherant->setTelephone($this->asNullableString($data['telephone'], 'telephone'));
+        }
+        if (array_key_exists('adresse', $data)) {
+            $adherant->setAdresse($this->asNullableString($data['adresse'], 'adresse'));
+        }
+        if (array_key_exists('dateNaissance', $data)) {
+            $adherant->setDateNaissance($this->parseDate($this->asNullableString($data['dateNaissance'], 'dateNaissance')));
+        }
+        if (array_key_exists('profession', $data)) {
+            $adherant->setProfession($this->asNullableString($data['profession'], 'profession'));
+        }
+        if (array_key_exists('commentaires', $data)) {
+            $adherant->setCommentaires($this->asNullableString($data['commentaires'], 'commentaires'));
+        }
+
+        $adherant->touch();
+        $this->entityManager->flush();
+
+        $json = $this->serializer->serialize($adherant, 'json', ['groups' => ['adherant:read', 'adherant:read:detail']]);
+
+        return new JsonResponse($json, 200, [], true);
+    }
+
     #[Route('/{id}/renew', methods: ['POST'])]
     public function renew(string $id, #[MapRequestPayload] RenewAdhesionRequest $dto, #[CurrentUser] Admin $admin): JsonResponse
     {
@@ -168,6 +222,42 @@ final class MemberController extends AbstractController
         }
 
         return $adherant;
+    }
+
+    private function requireNonBlankString(mixed $value, string $field): string
+    {
+        if (!is_string($value) || '' === trim($value)) {
+            throw new BadRequestHttpException(sprintf('Le champ "%s" est requis et ne peut être vide.', $field));
+        }
+
+        return $value;
+    }
+
+    private function asNullableString(mixed $value, string $field): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+        if (!is_string($value)) {
+            throw new BadRequestHttpException(sprintf('Le champ "%s" doit être une chaîne de caractères.', $field));
+        }
+
+        return '' === trim($value) ? null : $value;
+    }
+
+    private function validateOptionalEmail(mixed $value): ?string
+    {
+        $email = $this->asNullableString($value, 'email');
+        if (null === $email) {
+            return null;
+        }
+
+        $violations = $this->validator->validate($email, [new Assert\Email()]);
+        if (count($violations) > 0) {
+            throw new BadRequestHttpException(sprintf('Adresse e-mail invalide : %s', $email));
+        }
+
+        return $email;
     }
 
     private function parseDate(?string $value): ?\DateTimeImmutable

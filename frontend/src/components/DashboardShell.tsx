@@ -30,7 +30,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               height={36}
               className="rounded-full object-cover"
             />
-            <span className="text-lg font-bold">MyAssoc</span>
+            <span className="text-lg font-bold">C.J.O.M.M</span>
           </div>
 
           <nav className="hidden items-center gap-1 md:flex">

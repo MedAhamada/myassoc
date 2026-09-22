@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MyAssoc",
+  title: "C.J.O.M.M",
   description: "Gestion dématérialisée des adhérents de l'association",
 };
 

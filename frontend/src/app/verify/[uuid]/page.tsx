@@ -52,7 +52,7 @@ export default async function VerifyPage(props: PageProps<"/verify/[uuid]">) {
         )}
       </div>
 
-      <p className="text-xs text-white/60">MyAssoc — vérification de carte d&apos;adhérent</p>
+      <p className="text-xs text-white/60">C.J.O.M.M — vérification de carte d&apos;adhérent</p>
     </div>
   );
 }

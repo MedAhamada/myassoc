@@ -39,7 +39,7 @@ export default function LoginPage() {
             height={72}
             className="rounded-full object-cover"
           />
-          <h1 className="text-xl font-bold text-brand-navy">MyAssoc</h1>
+          <h1 className="text-xl font-bold text-brand-navy">C.J.O.M.M</h1>
           <p className="text-sm text-gray-500">Espace administrateur</p>
         </div>
 

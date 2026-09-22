@@ -62,7 +62,8 @@ final class MembershipCardService
 
     public function generatePdf(Adherant $adherant): string
     {
-        $adhesion = $adherant->getCurrentAdhesion();
+        $today = new \DateTimeImmutable('today');
+        $adhesion = $adherant->getAdhesionValidOn($today) ?? $adherant->getCurrentAdhesion();
 
         $html = $this->twig->render('pdf/membership_card.html.twig', [
             'adherant' => $adherant,

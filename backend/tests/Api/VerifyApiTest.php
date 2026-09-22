@@ -64,6 +64,47 @@ final class VerifyApiTest extends ApiTestCase
         self::assertSame('EXPIREE', $this->jsonResponse()['statut']);
     }
 
+    /**
+     * Regression test: renewing early (before the current period's dateFin)
+     * used to leave the member INVALIDE in the meantime, because the
+     * still-current period got flagged EXPIREE by the renewal itself while
+     * the new period doesn't start until later. The member must stay VALIDE
+     * — reflecting the still-current period's dates — until that new period
+     * actually begins.
+     */
+    public function testEarlyRenewalDoesNotInvalidateStillCurrentPeriod(): void
+    {
+        $actor = $this->createAdmin();
+        $member = $this->createAdherant('Early', 'Renewer');
+
+        // Current period: covers today through next year.
+        $this->jsonRequest(
+            'POST',
+            '/api/members/'.$member->getId().'/renew',
+            [],
+            $this->authHeaders($actor),
+        );
+        self::assertResponseIsSuccessful();
+        $firstDateFin = $this->jsonResponse()['adhesions'][0]['dateFin'];
+
+        // Renewed early, e.g. by an accidental extra click: creates a period
+        // starting only after the current one ends.
+        $this->jsonRequest(
+            'POST',
+            '/api/members/'.$member->getId().'/renew',
+            [],
+            $this->authHeaders($actor),
+        );
+        self::assertResponseIsSuccessful();
+
+        $this->client->request('GET', '/api/public/verify/'.$member->getUuid());
+
+        self::assertResponseIsSuccessful();
+        $result = $this->jsonResponse();
+        self::assertSame('VALIDE', $result['statut'], 'Member must still be covered by the still-current (not yet ended) period.');
+        self::assertStringStartsWith(substr((string) $firstDateFin, 0, 10), $result['dateFin']);
+    }
+
     public function testCancelledMembershipIsExpiree(): void
     {
         $actor = $this->createAdmin();

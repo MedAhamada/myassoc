@@ -54,6 +54,103 @@ final class AdminApiTest extends ApiTestCase
         self::assertResponseStatusCodeSame(409);
     }
 
+    public function testAdminCanUpdateAnotherAdminsInfo(): void
+    {
+        $actor = $this->createAdmin();
+        $target = $this->createAdmin();
+        $newEmail = $this->uniqueEmail('updated-admin');
+
+        $this->jsonRequest(
+            'PATCH',
+            '/api/admins/'.$target->getId(),
+            ['nom' => 'Updated', 'prenom' => 'Person', 'email' => $newEmail],
+            $this->authHeaders($actor),
+        );
+
+        self::assertResponseIsSuccessful();
+        $updated = $this->jsonResponse();
+        self::assertSame('Updated', $updated['nom']);
+        self::assertSame('Person', $updated['prenom']);
+        self::assertSame($newEmail, $updated['email']);
+    }
+
+    public function testUpdateOnlyTouchesProvidedFields(): void
+    {
+        $actor = $this->createAdmin();
+        $target = $this->createAdmin(); // nom: 'Test', prenom: 'Admin'
+
+        $this->jsonRequest(
+            'PATCH',
+            '/api/admins/'.$target->getId(),
+            ['prenom' => 'NewFirstName'],
+            $this->authHeaders($actor),
+        );
+
+        self::assertResponseIsSuccessful();
+        $updated = $this->jsonResponse();
+        self::assertSame('Test', $updated['nom']);
+        self::assertSame('NewFirstName', $updated['prenom']);
+    }
+
+    public function testUpdateToExistingEmailConflicts(): void
+    {
+        $actor = $this->createAdmin();
+        $target = $this->createAdmin();
+
+        $this->jsonRequest(
+            'PATCH',
+            '/api/admins/'.$target->getId(),
+            ['email' => $actor->getEmail()],
+            $this->authHeaders($actor),
+        );
+
+        self::assertResponseStatusCodeSame(409);
+    }
+
+    public function testUpdateRejectsBlankNom(): void
+    {
+        $actor = $this->createAdmin();
+        $target = $this->createAdmin();
+
+        $this->jsonRequest(
+            'PATCH',
+            '/api/admins/'.$target->getId(),
+            ['nom' => '  '],
+            $this->authHeaders($actor),
+        );
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testUpdateRejectsShortPassword(): void
+    {
+        $actor = $this->createAdmin();
+        $target = $this->createAdmin();
+
+        $this->jsonRequest(
+            'PATCH',
+            '/api/admins/'.$target->getId(),
+            ['password' => 'short'],
+            $this->authHeaders($actor),
+        );
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testUpdatingUnknownAdminReturns404(): void
+    {
+        $actor = $this->createAdmin();
+
+        $this->jsonRequest(
+            'PATCH',
+            '/api/admins/00000000-0000-0000-0000-000000000000',
+            ['nom' => 'X'],
+            $this->authHeaders($actor),
+        );
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
     public function testAdminCannotDeleteOwnAccount(): void
     {
         $actor = $this->createAdmin();

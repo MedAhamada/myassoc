@@ -25,13 +25,14 @@ final class MembershipMailer
             throw new \DomainException('Cet adhérent n\'a pas d\'adresse e-mail renseignée.');
         }
 
-        $adhesion = $adherant->getCurrentAdhesion();
+        $today = new \DateTimeImmutable('today');
+        $adhesion = $adherant->getAdhesionValidOn($today) ?? $adherant->getCurrentAdhesion();
         $pdf = $this->cardService->generatePdf($adherant);
 
         $email = (new TemplatedEmail())
             ->from(new Address($this->fromAddress, $this->fromName))
             ->to($adherant->getEmail())
-            ->subject('Votre carte d\'adhérent MyAssoc')
+            ->subject('Votre carte d\'adhérent C.J.O.M.M')
             ->htmlTemplate('email/membership_card.html.twig')
             ->textTemplate('email/membership_card.txt.twig')
             ->context([

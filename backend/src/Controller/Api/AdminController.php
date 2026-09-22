@@ -10,6 +10,7 @@ use App\Repository\AdminRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -19,6 +20,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/admins')]
 final class AdminController extends AbstractController
@@ -28,6 +31,7 @@ final class AdminController extends AbstractController
         private readonly AdminRepository $adminRepository,
         private readonly SerializerInterface $serializer,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -65,6 +69,55 @@ final class AdminController extends AbstractController
         return new JsonResponse($json, 201, [], true);
     }
 
+    /**
+     * Partial update: only the fields present in the JSON body are touched,
+     * mirroring MemberController::update. Password is optional — omit it to
+     * leave the current one in place.
+     */
+    #[Route('/{id}', methods: ['PATCH'])]
+    public function update(string $id, Request $request): JsonResponse
+    {
+        $admin = $this->findOrFail($id);
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            throw new BadRequestHttpException('Corps de requête JSON invalide.');
+        }
+
+        if (array_key_exists('nom', $data)) {
+            $admin->setNom($this->requireNonBlankString($data['nom'], 'nom'));
+        }
+        if (array_key_exists('prenom', $data)) {
+            $admin->setPrenom($this->requireNonBlankString($data['prenom'], 'prenom'));
+        }
+        if (array_key_exists('email', $data)) {
+            $email = $this->requireNonBlankString($data['email'], 'email');
+            $violations = $this->validator->validate($email, [new Assert\Email()]);
+            if (count($violations) > 0) {
+                throw new BadRequestHttpException(sprintf('Adresse e-mail invalide : %s', $email));
+            }
+
+            $existing = $this->adminRepository->findOneByEmail($email);
+            if (null !== $existing && !$existing->getId()->equals($admin->getId())) {
+                throw new ConflictHttpException('Un administrateur avec cet email existe déjà.');
+            }
+            $admin->setEmail($email);
+        }
+        if (array_key_exists('password', $data)) {
+            if (!is_string($data['password']) || \strlen($data['password']) < 8) {
+                throw new BadRequestHttpException('Le mot de passe doit contenir au moins 8 caractères.');
+            }
+            $admin->setPassword($this->passwordHasher->hashPassword($admin, $data['password']));
+        }
+
+        $admin->touch();
+        $this->entityManager->flush();
+
+        $json = $this->serializer->serialize($admin, 'json', ['groups' => ['admin:read']]);
+
+        return new JsonResponse($json, 200, [], true);
+    }
+
     #[Route('/{id}', methods: ['DELETE'])]
     public function delete(string $id, #[CurrentUser] Admin $currentAdmin): JsonResponse
     {
@@ -94,5 +147,14 @@ final class AdminController extends AbstractController
         }
 
         return $admin;
+    }
+
+    private function requireNonBlankString(mixed $value, string $field): string
+    {
+        if (!is_string($value) || '' === trim($value)) {
+            throw new BadRequestHttpException(sprintf('Le champ "%s" est requis et ne peut être vide.', $field));
+        }
+
+        return $value;
     }
 }

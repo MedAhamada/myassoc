@@ -123,10 +123,17 @@ class Adhesion
         return $this;
     }
 
-    /** Whether "today" falls within [dateDebut, dateFin] and the period hasn't been cancelled. */
+    /**
+     * Whether `$date` falls within [dateDebut, dateFin] and the period
+     * hasn't been cancelled. Deliberately doesn't require statut EN_COURS:
+     * AdhesionService::renew() flips the previous period to EXPIREE as soon
+     * as a new one is created, even if the new period starts later (an early
+     * renewal) — so a still date-valid period can carry statut EXPIREE. Real
+     * validity is a function of the dates, not that bookkeeping flag.
+     */
     public function isValidOn(\DateTimeImmutable $date): bool
     {
-        return AdhesionStatut::EN_COURS === $this->statut
+        return AdhesionStatut::CANCELLED !== $this->statut
             && $date >= $this->dateDebut
             && $date <= $this->dateFin;
     }

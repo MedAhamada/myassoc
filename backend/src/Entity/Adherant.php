@@ -258,9 +258,28 @@ class Adherant
         return $this;
     }
 
-    /** Most recent membership period, if any. */
+    /**
+     * Most recently created membership period, if any — NOT necessarily the
+     * one covering today (an early renewal creates a period that starts
+     * after the still-current one ends). Used where "the latest record" is
+     * what's wanted: deciding renewal/cancellation targets, or a fallback
+     * display value. For "is this member covered right now", use
+     * getAdhesionValidOn() instead.
+     */
     public function getCurrentAdhesion(): ?Adhesion
     {
         return $this->adhesions->isEmpty() ? null : $this->adhesions->first();
+    }
+
+    /** The membership period actually covering `$date`, if any. */
+    public function getAdhesionValidOn(\DateTimeImmutable $date): ?Adhesion
+    {
+        foreach ($this->adhesions as $adhesion) {
+            if ($adhesion->isValidOn($date)) {
+                return $adhesion;
+            }
+        }
+
+        return null;
     }
 }

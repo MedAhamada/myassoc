@@ -78,6 +78,8 @@ export const api = {
   listAdmins: () => request<Admin[]>("/admins"),
   createAdmin: (data: { email: string; password: string; nom: string; prenom: string }) =>
     request<Admin>("/admins", { method: "POST", body: JSON.stringify(data) }),
+  updateAdmin: (id: string, data: Partial<Pick<Admin, "nom" | "prenom" | "email">> & { password?: string }) =>
+    request<Admin>(`/admins/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteAdmin: (id: string) => request<void>(`/admins/${id}`, { method: "DELETE" }),
 
   listMembers: (params: { q?: string; statut?: AdherantStatut; page?: number; limit?: number }) => {

@@ -36,8 +36,10 @@ final class VerifyController extends AbstractController
             return new JsonResponse(['statut' => 'INVALIDE']);
         }
 
-        $adhesion = $adherant->getCurrentAdhesion();
-        $valid = null !== $adhesion && $adhesion->isValidOn(new \DateTimeImmutable('today'));
+        $today = new \DateTimeImmutable('today');
+        $validAdhesion = $adherant->getAdhesionValidOn($today);
+        $adhesion = $validAdhesion ?? $adherant->getCurrentAdhesion();
+        $valid = null !== $validAdhesion;
 
         return new JsonResponse([
             'statut' => $valid ? 'VALIDE' : 'EXPIREE',

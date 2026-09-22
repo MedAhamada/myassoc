@@ -22,6 +22,7 @@ export interface Adhesion {
 export interface Adherant {
   id: string;
   uuid: string;
+  code: string;
   nom: string;
   prenom: string;
   email: string | null;

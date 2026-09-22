@@ -116,8 +116,8 @@
                 <td class="identity-cell">
                     <div class="name">{{ adherant.prenom }} {{ adherant.nom|upper }}</div>
 
-                    <div class="field-label">N&deg; d'adh&eacute;sion</div>
-                    <div class="field-value">{{ numeroAdhesion ?? '—' }}</div>
+                    <div class="field-label">Code adh&eacute;rent</div>
+                    <div class="field-value">{{ adherant.code }}</div>
 
                     <div class="validity">
                         {% if adhesion %}

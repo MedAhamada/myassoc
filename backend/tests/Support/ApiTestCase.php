@@ -6,6 +6,7 @@ namespace App\Tests\Support;
 
 use App\Entity\Adherant;
 use App\Entity\Admin;
+use App\Service\MemberCodeGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -63,7 +64,8 @@ abstract class ApiTestCase extends WebTestCase
 
     protected function createAdherant(string $nom = 'Doe', string $prenom = 'Jane', ?string $email = null): Adherant
     {
-        $adherant = new Adherant();
+        $codeGenerator = static::getContainer()->get(MemberCodeGenerator::class);
+        $adherant = new Adherant($codeGenerator->generate());
         $adherant->setNom($nom)->setPrenom($prenom)->setEmail($email);
 
         $this->entityManager->persist($adherant);

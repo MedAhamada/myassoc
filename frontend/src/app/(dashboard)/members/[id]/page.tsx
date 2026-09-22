@@ -174,8 +174,9 @@ export default function MemberDetailPage() {
           <h1 className="text-2xl font-bold text-brand-navy">
             {member.prenom} {member.nom}
           </h1>
-          <div className="mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={member.statut} />
+            <span className="font-mono text-xs text-gray-400">{member.code}</span>
           </div>
         </div>
       </div>

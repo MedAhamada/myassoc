@@ -37,7 +37,6 @@ final class MembershipMailer
             ->context([
                 'adherant' => $adherant,
                 'adhesion' => $adhesion,
-                'numeroAdhesion' => $adhesion ? $this->cardService->formatAdhesionNumber($adhesion) : null,
                 'verificationUrl' => $this->cardService->getVerificationUrl($adherant),
             ])
             ->attach($pdf, 'carte-adherent.pdf', 'application/pdf');

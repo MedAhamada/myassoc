@@ -13,6 +13,7 @@ use App\Enum\AdherantStatut;
 use App\Repository\AdherantRepository;
 use App\Service\AdherantImportService;
 use App\Service\AdhesionService;
+use App\Service\MemberCodeGenerator;
 use App\Service\MembershipMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -41,6 +42,7 @@ final class MemberController extends AbstractController
         private readonly AdhesionService $adhesionService,
         private readonly ValidatorInterface $validator,
         private readonly MembershipMailer $membershipMailer,
+        private readonly MemberCodeGenerator $memberCodeGenerator,
         private readonly LoggerInterface $logger,
         private readonly NormalizerInterface $normalizer,
     ) {
@@ -77,7 +79,7 @@ final class MemberController extends AbstractController
     #[Route('', methods: ['POST'])]
     public function create(#[MapRequestPayload] CreateAdherantRequest $dto): JsonResponse
     {
-        $adherant = new Adherant();
+        $adherant = new Adherant($this->memberCodeGenerator->generate());
         $adherant->setNom($dto->nom)
             ->setPrenom($dto->prenom)
             ->setEmail($dto->email)

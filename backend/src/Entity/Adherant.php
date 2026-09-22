@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: AdherantRepository::class)]
 #[ORM\Table(name: 'adherant')]
 #[ORM\UniqueConstraint(name: 'uniq_adherant_uuid', columns: ['uuid'])]
+#[ORM\UniqueConstraint(name: 'uniq_adherant_code', columns: ['code'])]
 #[ORM\Index(name: 'idx_adherant_statut', columns: ['statut'])]
 class Adherant
 {
@@ -28,6 +29,15 @@ class Adherant
     #[ORM\Column(type: 'uuid', unique: true)]
     #[Groups(['adherant:read'])]
     private Uuid $uuid;
+
+    /**
+     * Permanent, human-readable member code (e.g. "E0D-A32"): belongs to the
+     * adherant, not to any single adhesion period, so it is generated once at
+     * creation (see MemberCodeGenerator) and never changes afterwards.
+     */
+    #[ORM\Column(length: 7)]
+    #[Groups(['adherant:read'])]
+    private string $code;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
@@ -82,10 +92,11 @@ class Adherant
     #[Groups(['adherant:read:detail'])]
     private Collection $adhesions;
 
-    public function __construct()
+    public function __construct(string $code)
     {
         $this->id = Uuid::v4();
         $this->uuid = Uuid::v4();
+        $this->code = $code;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
         $this->adhesions = new ArrayCollection();
@@ -99,6 +110,11 @@ class Adherant
     public function getUuid(): Uuid
     {
         return $this->uuid;
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
     }
 
     public function getNom(): string

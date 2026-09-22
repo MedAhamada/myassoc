@@ -39,6 +39,7 @@ final class AdherantImportService
         private readonly EntityManagerInterface $entityManager,
         private readonly AdherantRepository $adherantRepository,
         private readonly ValidatorInterface $validator,
+        private readonly MemberCodeGenerator $memberCodeGenerator,
     ) {
     }
 
@@ -91,7 +92,7 @@ final class AdherantImportService
                 continue;
             }
 
-            $adherant = new Adherant();
+            $adherant = new Adherant($this->memberCodeGenerator->generate());
             $adherant->setNom((string) $nom)
                 ->setPrenom((string) $prenom)
                 ->setEmail($normalizedEmail)

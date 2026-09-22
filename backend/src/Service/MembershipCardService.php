@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Adherant;
-use App\Entity\Adhesion;
 use Dompdf\Dompdf;
 use Dompdf\Options as DompdfOptions;
 use Endroid\QrCode\Builder\Builder;
@@ -61,18 +60,6 @@ final class MembershipCardService
         return is_readable($this->logoPath) ? $this->logoPath : null;
     }
 
-    /**
-     * A short, readable membership number derived from the adhesion's own
-     * (already unique) id — grouped like "3F2A-9B71-0CDE" rather than
-     * printing the full UUID.
-     */
-    public function formatAdhesionNumber(Adhesion $adhesion): string
-    {
-        $hex = strtoupper(str_replace('-', '', (string) $adhesion->getId()));
-
-        return implode('-', str_split(substr($hex, 0, 12), 4));
-    }
-
     public function generatePdf(Adherant $adherant): string
     {
         $adhesion = $adherant->getCurrentAdhesion();
@@ -82,7 +69,6 @@ final class MembershipCardService
             'adhesion' => $adhesion,
             'qrCodeDataUri' => $this->generateQrCodeDataUri($adherant),
             'logoDataUri' => $this->getLogoDataUri(),
-            'numeroAdhesion' => $adhesion ? $this->formatAdhesionNumber($adhesion) : null,
         ]);
 
         $options = new DompdfOptions();

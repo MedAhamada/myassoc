@@ -45,8 +45,8 @@
                                     <td style="padding:20px 22px;">
                                         <div style="color:#FFFFFF; font-size:17px; font-weight:bold;">{{ adherant.prenom }} {{ adherant.nom|upper }}</div>
 
-                                        <div style="color:#F2B705; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-top:14px;">N&deg; d'adh&eacute;sion</div>
-                                        <div style="color:#FFFFFF; font-size:14px; font-weight:bold; letter-spacing:0.4px; margin-top:2px;">{{ numeroAdhesion ?? '—' }}</div>
+                                        <div style="color:#F2B705; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-top:14px;">Code adh&eacute;rent</div>
+                                        <div style="color:#FFFFFF; font-size:14px; font-weight:bold; letter-spacing:0.4px; margin-top:2px;">{{ adherant.code }}</div>
 
                                         {% if adhesion %}
                                         <div style="color:#E5E9F0; font-size:13px; margin-top:14px;">

@@ -93,6 +93,7 @@ export default function MembersPage() {
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600">Code</th>
               <th className="px-4 py-3 text-left font-semibold text-gray-600">Nom</th>
               <th className="px-4 py-3 text-left font-semibold text-gray-600">Email</th>
               <th className="px-4 py-3 text-left font-semibold text-gray-600">Téléphone</th>
@@ -102,20 +103,21 @@ export default function MembersPage() {
           <tbody className="divide-y divide-gray-100">
             {isLoading && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
                   Chargement…
                 </td>
               </tr>
             )}
             {!isLoading && data?.items.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
                   Aucun adhérent trouvé.
                 </td>
               </tr>
             )}
             {data?.items.map((member) => (
               <tr key={member.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-mono text-xs text-gray-500">{member.code}</td>
                 <td className="px-4 py-3">
                   <Link
                     href={`/members/${member.id}`}

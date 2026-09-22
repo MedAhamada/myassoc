@@ -60,6 +60,11 @@
             font-weight: bold;
             line-height: 1.15;
         }
+        .member-since {
+            font-size: 6.5pt;
+            color: #E5E9F0;
+            margin-top: 1pt;
+        }
         .field-label {
             font-size: 6pt;
             text-transform: uppercase;
@@ -115,6 +120,7 @@
             <tr>
                 <td class="identity-cell">
                     <div class="name">{{ adherant.prenom }} {{ adherant.nom|upper }}</div>
+                    <div class="member-since">Adh&eacute;rent depuis {{ adherant.createdAt|date('Y') }}</div>
 
                     <div class="field-label">Code adh&eacute;rent</div>
                     <div class="field-value">{{ adherant.code }}</div>

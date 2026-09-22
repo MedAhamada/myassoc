@@ -52,12 +52,20 @@ export default function MembersPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="text-2xl font-bold text-brand-navy">Adhérents</h1>
-        <Link
-          href="/members/new"
-          className="inline-flex items-center justify-center rounded-lg bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark"
-        >
-          + Nouvel adhérent
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/members/import"
+            className="inline-flex items-center justify-center rounded-lg border border-brand-navy px-4 py-2 text-sm font-semibold text-brand-navy hover:bg-brand-navy/5"
+          >
+            Importer
+          </Link>
+          <Link
+            href="/members/new"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark"
+          >
+            + Nouvel adhérent
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">

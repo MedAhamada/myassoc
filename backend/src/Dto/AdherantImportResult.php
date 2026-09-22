@@ -7,6 +7,7 @@ namespace App\Dto;
 final class AdherantImportResult
 {
     public int $imported = 0;
+    public int $updated = 0;
     public int $skippedDuplicates = 0;
 
     /** @var list<array{row: int, errors: list<string>}> */

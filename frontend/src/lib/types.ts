@@ -61,6 +61,7 @@ export interface ApiErrorPayload {
 
 export interface ImportResult {
   imported: number;
+  updated: number;
   skippedDuplicates: number;
   errors: { row: number; errors: string[] }[];
 }

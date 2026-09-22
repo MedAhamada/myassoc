@@ -8,8 +8,8 @@ import { useAuth } from "@/lib/auth-context";
 
 const NAV_ITEMS = [
   { href: "/members", label: "Adhérents" },
-  { href: "/members/new", label: "Nouvel adhérent" },
-  { href: "/members/import", label: "Importer" },
+  // { href: "/members/new", label: "Nouvel adhérent" },
+  // { href: "/members/import", label: "Importer" },
   { href: "/admins", label: "Administrateurs" },
 ];
 

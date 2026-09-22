@@ -98,7 +98,7 @@ final class MemberController extends AbstractController
     }
 
     #[Route('/import', methods: ['POST'])]
-    public function import(Request $request, AdherantImportService $importer): JsonResponse
+    public function import(Request $request, AdherantImportService $importer, #[CurrentUser] Admin $admin): JsonResponse
     {
         $file = $request->files->get('file');
         if (null === $file) {
@@ -110,10 +110,11 @@ final class MemberController extends AbstractController
             throw new BadRequestHttpException('Format non supporté : seuls .csv et .xlsx sont acceptés.');
         }
 
-        $result = $importer->importFromFile($file->getPathname());
+        $result = $importer->importFromFile($file->getPathname(), $admin);
 
         return new JsonResponse([
             'imported' => $result->imported,
+            'updated' => $result->updated,
             'skippedDuplicates' => $result->skippedDuplicates,
             'errors' => $result->errors,
         ], 200);

@@ -34,9 +34,31 @@ export default function ImportMembersPage() {
       <h1 className="text-2xl font-bold text-brand-navy">Importer des adhérents</h1>
       <p className="text-sm text-gray-600">
         Importez un fichier <code>.csv</code> ou <code>.xlsx</code> exporté depuis votre
-        formulaire d&apos;adhésion. Les colonnes attendues : Nom, Prénom, E-mail, Téléphone,
-        Adresse, Date de naissance, Profession / Études.
+        formulaire d&apos;adhésion. Les colonnes attendues : Code, Nom, Prénom, E-mail, Téléphone,
+        Adresse, Date de naissance, Profession / Études, Date début, Date fin.
       </p>
+      <ul className="list-disc space-y-1 pl-5 text-sm text-gray-600">
+        <li>
+          Laissez la colonne <strong>Code</strong> vide pour créer un nouvel adhérent — le code
+          est généré automatiquement.
+        </li>
+        <li>
+          Renseignez le <strong>Code</strong> d&apos;un adhérent existant (visible sur sa fiche)
+          pour modifier ses informations au lieu d&apos;en créer un nouveau. Les cellules laissées
+          vides conservent alors leur valeur actuelle.
+        </li>
+        <li>
+          Renseignez <strong>Date début</strong> / <strong>Date fin</strong> (format JJ/MM/AAAA)
+          pour créer automatiquement une adhésion sur cette période.
+        </li>
+      </ul>
+      <a
+        href="/templates/modele-import-adherents.csv"
+        download
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-navy hover:underline"
+      >
+        ⬇ Télécharger le modèle de fichier (.csv)
+      </a>
 
       <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <input
@@ -60,7 +82,8 @@ export default function ImportMembersPage() {
       {result && (
         <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <p className="text-sm">
-            <strong className="text-brand-green">{result.imported}</strong> adhérent(s) importé(s),{" "}
+            <strong className="text-brand-green">{result.imported}</strong> adhérent(s) créé(s),{" "}
+            <strong className="text-brand-navy">{result.updated}</strong> modifié(s),{" "}
             <strong>{result.skippedDuplicates}</strong> doublon(s) ignoré(s).
           </p>
           {result.errors.length > 0 && (

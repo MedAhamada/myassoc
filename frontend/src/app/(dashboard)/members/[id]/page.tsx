@@ -55,8 +55,8 @@ export default function MemberDetailPage() {
   }, [load]);
 
   async function handleRenew() {
-    const currentAdhesion = member?.adhesions?.[0];
-    if (currentAdhesion?.statut === "EN_COURS") {
+    const currentAdhesion = member?.adhesionEnCours;
+    if (currentAdhesion) {
       const confirmed = confirm(
         `Cet adhérent a déjà une adhésion en cours jusqu'au ${formatDate(currentAdhesion.dateFin)}. Voulez-vous vraiment la renouveler ?`,
       );
@@ -173,7 +173,7 @@ export default function MemberDetailPage() {
     return <p className="text-sm text-gray-400">Chargement…</p>;
   }
 
-  const current = member.adhesions?.[0];
+  const current = member.adhesionEnCours;
 
   return (
     <div className="space-y-6">

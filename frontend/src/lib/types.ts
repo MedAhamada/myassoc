@@ -35,6 +35,8 @@ export interface Adherant {
   createdAt: string;
   updatedAt: string;
   adhesions?: Adhesion[];
+  /** The membership period covering today, if any — distinct from adhesions[0], which is simply the most recently created period. */
+  adhesionEnCours?: Adhesion | null;
 }
 
 /**

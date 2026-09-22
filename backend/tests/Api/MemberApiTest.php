@@ -193,6 +193,32 @@ final class MemberApiTest extends ApiTestCase
     }
 
     /**
+     * Regression test: adhesionEnCours must reflect the period actually
+     * covering today, not simply the most recently created one — an early
+     * renewal (second renew call before the first period ends) must not
+     * make it disappear from the detail view.
+     */
+    public function testAdhesionEnCoursReflectsStillCurrentPeriodAfterEarlyRenewal(): void
+    {
+        $actor = $this->createAdmin();
+        $member = $this->createAdherant();
+
+        $this->jsonRequest('POST', '/api/members/'.$member->getId().'/renew', [], $this->authHeaders($actor));
+        self::assertResponseIsSuccessful();
+        $firstDateFin = $this->jsonResponse()['adhesions'][0]['dateFin'];
+
+        $this->jsonRequest('POST', '/api/members/'.$member->getId().'/renew', [], $this->authHeaders($actor));
+        self::assertResponseIsSuccessful();
+
+        $this->client->request('GET', '/api/members/'.$member->getId(), server: $this->authHeaders($actor));
+        self::assertResponseIsSuccessful();
+        $detail = $this->jsonResponse();
+
+        self::assertNotNull($detail['adhesionEnCours']);
+        self::assertSame($firstDateFin, $detail['adhesionEnCours']['dateFin']);
+    }
+
+    /**
      * Per spec: the card is sent automatically after renewal whenever the
      * adherant has an e-mail on file, in addition to the manual
      * POST /members/{id}/card/send-email endpoint.

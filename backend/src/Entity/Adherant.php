@@ -282,4 +282,15 @@ class Adherant
 
         return null;
     }
+
+    /**
+     * The membership period covering today, if any — exposed to the API/UI
+     * as "the current period" so displays stay aligned with the same
+     * real-time validity check used by the QR verification and the card.
+     */
+    #[Groups(['adherant:read:detail'])]
+    public function getAdhesionEnCours(): ?Adhesion
+    {
+        return $this->getAdhesionValidOn(new \DateTimeImmutable('today'));
+    }
 }

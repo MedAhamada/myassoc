@@ -12,7 +12,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AdhesionRepository::class)]
-#[ORM\Table(name: 'adhesion')]
+#[ORM\Table(name: 'myassoc_adhesion')]
 #[ORM\Index(name: 'idx_adhesion_statut', columns: ['statut'])]
 class Adhesion
 {

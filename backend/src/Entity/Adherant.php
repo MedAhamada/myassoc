@@ -14,7 +14,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AdherantRepository::class)]
-#[ORM\Table(name: 'adherant')]
+#[ORM\Table(name: 'myassoc_adherant')]
 #[ORM\UniqueConstraint(name: 'uniq_adherant_uuid', columns: ['uuid'])]
 #[ORM\UniqueConstraint(name: 'uniq_adherant_code', columns: ['code'])]
 #[ORM\Index(name: 'idx_adherant_statut', columns: ['statut'])]

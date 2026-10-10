@@ -4,17 +4,19 @@
     <meta charset="utf-8">
     <style>
         @page { margin: 0; }
-        * { box-sizing: border-box; }
+        html, body { background-color: #0E2A47; }
         body {
             margin: 0;
             font-family: 'DejaVu Sans', sans-serif;
-            width: 243pt;
-            height: 153pt;
         }
+        /* Dompdf ignores box-sizing: width/height exclude the padding, so they
+           are the page size (243pt x 153pt) minus the padding. Any overflow
+           pushes the content onto a second page. */
         .card {
-            width: 243pt;
-            height: 153pt;
+            width: 223pt;
+            height: 137pt;
             padding: 8pt 10pt;
+            overflow: hidden;
             background-color: #0E2A47;
             color: #FFFFFF;
         }
@@ -24,10 +26,10 @@
 
         /* Header: logo + association name, gold divider underneath */
         .header td { vertical-align: middle; }
-        .logo-cell { width: 30pt; }
+        .logo-cell { width: 28pt; }
         .logo-cell img {
-            width: 26pt;
-            height: 26pt;
+            width: 24pt;
+            height: 24pt;
             border-radius: 50%;
             border: 1.4pt solid #F2B705;
         }
@@ -47,7 +49,7 @@
         .divider {
             height: 1.2pt;
             background: #F2B705;
-            margin: 5pt 0 6pt 0;
+            margin: 4pt 0 5pt 0;
             width: 100%;
             font-size: 0;
             line-height: 0;
@@ -56,10 +58,11 @@
         /* Body: identity block + QR block */
         .identity-cell { width: 148pt; }
         .name {
-            font-size: 14pt;
+            font-size: 12pt;
             font-weight: bold;
-            line-height: 1.15;
+            line-height: 1.1;
         }
+        .name-long { font-size: 10pt; }
         .member-since {
             font-size: 6.5pt;
             color: #E5E9F0;
@@ -70,7 +73,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5pt;
             color: #F2B705;
-            margin-top: 5pt;
+            margin-top: 4pt;
         }
         .field-value {
             font-size: 9pt;
@@ -78,9 +81,10 @@
             letter-spacing: 0.4pt;
         }
         .validity {
-            font-size: 7.5pt;
+            font-size: 7pt;
             color: #E5E9F0;
-            margin-top: 5pt;
+            margin-top: 4pt;
+            white-space: nowrap;
         }
         .validity strong { color: #FFFFFF; }
 
@@ -119,7 +123,8 @@
         <table>
             <tr>
                 <td class="identity-cell">
-                    <div class="name">{{ adherant.prenom }} {{ adherant.nom|upper }}</div>
+                    {% set fullName = adherant.prenom ~ ' ' ~ (adherant.nom|upper) %}
+                    <div class="name{{ fullName|length > 30 ? ' name-long' }}">{{ fullName }}</div>
                     <div class="member-since">Adh&eacute;rent depuis {{ adherant.createdAt|date('Y') }}</div>
 
                     <div class="field-label">Code adh&eacute;rent</div>

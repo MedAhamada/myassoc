@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AdminRepository::class)]
-#[ORM\Table(name: 'admin')]
+#[ORM\Table(name: 'myassoc_admin')]
 #[ORM\UniqueConstraint(name: 'uniq_admin_email', columns: ['email'])]
 class Admin implements UserInterface, PasswordAuthenticatedUserInterface
 {
